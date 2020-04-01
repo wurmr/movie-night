@@ -1,48 +1,26 @@
 import React, { Component } from 'react';
-//import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
+import { Link } from 'react-router-dom';
 import { getMovieNightByDate } from '../../actions/movieNightActions';
-import { getMovieByImdbId } from '../../actions/movieActions';
-//import MovieChoice from './../movie/MovieChoice';
 import MovieDetail from './../movie/MovieDetail';
+import MovieChoiceList from './../movie/MovieChoiceList';
 import moment from 'moment';
-//import Spinner from '../common/Spinner';
 
 class MovieNight extends Component {
   componentDidMount() {     
       this.props.getMovieNightByDate(this.props.match.params.date);
   }
 
-  // componentWillReceiveProps() {
-  //   this.props.getMovieNightByDate(this.props.match.params.date);
-  // }
-
   render() {
     const { movieNight, loading } = this.props.movieNight
     if (loading) return <div><h3>Loading ...</h3></div>
-    // const {movieSelected} = {};
-    // const {movieChoice1} = {};
-    // const {movieChoice2} = {};
-    // const {movieChoice3} = {};
-
-    // if (movieNight.movieChoicesRoundOne[0]) {
-    //     this.props.get
-      
-    //   // TODO: get the movies here or just send over imdbId?
-
-    //   //movieChoice1 = 
-    // }
-    console.log(movieNight);
-    if (movieNight.movieChoicesRoundOne) {
-        console.log(movieNight.movieChoicesRoundOne[0])
-    }
 
     let movieNightContent;
     if (!movieNight.date) {
         movieNightContent = (
           <div>
-            <h3>No movie found for the date of {this.props.match.params.date}</h3>
+            <h3>No movie night found for the date of {this.props.match.params.date}</h3>
           </div>
         )
     }
@@ -50,8 +28,10 @@ class MovieNight extends Component {
       movieNightContent = (
           <div>
               <h3>{moment.utc(movieNight.date).format('dddd, MMMM Do YYYY')}</h3>
-              <h5>{movieNight.host}</h5>
-              <h5>{movieNight.location}</h5>
+              <h5>Hosted by <Link to={`/allMovieNights/${movieNight.host}`}>{movieNight.host}</Link> in {movieNight.location}</h5>
+              <h5>Choices:</h5>
+              <MovieChoiceList imdbIds={movieNight.movieChoicesRoundOne}></MovieChoiceList>
+              <h5>Movie Viewed:</h5>
               <MovieDetail imdbId={movieNight.movieViewed}></MovieDetail>
           </div>
       )
@@ -74,8 +54,8 @@ class MovieNight extends Component {
 MovieNight.propTypes = {
     getMovieNightByDate: PropTypes.func.isRequired,
     auth: PropTypes.object.isRequired,
-    movieNight: PropTypes.object.isRequired,
-    getMovieByImdbId: PropTypes.func.isRequired
+    movieNight: PropTypes.object.isRequired
+    //getMovieByImdbId: PropTypes.func.isRequired
 };
 
 const mapStateToProps = state => ({
@@ -83,4 +63,4 @@ const mapStateToProps = state => ({
   auth: state.auth
 });
 
-export default connect(mapStateToProps, { getMovieNightByDate, getMovieByImdbId })(MovieNight);
+export default connect(mapStateToProps, { getMovieNightByDate })(MovieNight);

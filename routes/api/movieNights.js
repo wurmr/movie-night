@@ -12,9 +12,27 @@ const validateMovieNightInput = require('../../validation/movieNight');
 // @access Private
 router.get('/', passport.authenticate('jwt', { session: false }), (req, res) => {
     MovieNight.find()
-        .sort({ date: -1 })  //descending
+        .sort({ date: -1 })  // descending
         .then(movieNights => res.json(movieNights))
 });
+
+// @route   GET api/movieNight/host/:host
+// @desc    Get movieNights by host
+// @access  Public
+router.get('/host/:host', (req, res) => {
+    const errors = {};
+    MovieNight.find({ host: req.params.host })
+        .sort({ date: -1 })  // descending
+        .then(movieNights => {
+            if (!movieNights) {
+                errors.nomovienights = 'There are no movie nights with host: ' + req.params.host;
+                res.status(404).json(errors);
+            }
+    
+            res.json(movieNights);
+        })
+        .catch(err => res.status(404).json(err));
+  });
 
 // @route   GET api/movieNight/date/:date
 // @desc    Get movieNight by date
@@ -24,8 +42,8 @@ router.get('/date/:date', (req, res) => {
     MovieNight.findOne({ date: req.params.date })
       .then(movieNight => {
         if (!movieNight) {
-          errors.nomovienight = 'There is no movie night with this date: ' + req.params.date;
-          res.status(404).json(errors);
+            errors.nomovienight = 'There is no movie night with this date: ' + req.params.date;
+            res.status(404).json(errors);
         }
   
         res.json(movieNight);
@@ -33,20 +51,20 @@ router.get('/date/:date', (req, res) => {
       .catch(err => res.status(404).json(err));
   });
 
-// // @route POST api/movieNights
-// // @desc Create a movieNight
-// // @access Public
-// router.post('/', (req, res) => {
-//     const newMovieNight = new MovieNight({
-//         host: req.body.host,
-//         location: req.body.location,
-//         movieChoices: req.body.movieChoices,
-//         movieViewed: req.body.movieViewed,
-//         movieVotes: req.body.movieVotes
-//     });
-
-//     newMovieNight.save().then(movieNight => res.json(movieNight));
-// });
+// @route   GET api/movieNight/movieViewed/:movieViewed
+// @desc    Get movieNight by movie viewed IMDB ID
+// @access  Public
+router.get('/movieViewed/:movieViewed', (req, res) => {
+    const errors = {};
+    MovieNight.findOne({ movieViewed: req.params.movieViewed })
+      .then(movieNight => {
+        if (!movieNight) {
+            // fail silently and send back null
+        }  
+        res.json(movieNight);
+      })
+      .catch(err => res.status(404).json(err));
+  });
 
 // @route POST api/movieNight
 // @desc Create a movieNight

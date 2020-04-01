@@ -1,6 +1,8 @@
 import { 
-    GET_MOVIENIGHTS, 
-    GET_MOVIENIGHT, 
+    GET_MOVIENIGHTS,
+    GET_MOVIENIGHTS_BY_HOST,
+    GET_MOVIENIGHT,
+    GET_MOVIENIGHT_BY_MOVIE_VIEWED, 
     ADD_MOVIENIGHT, 
     DELETE_MOVIENIGHT, 
     MOVIENIGHTS_LOADING 
@@ -20,10 +22,22 @@ export default function(state = initialState, action) {
                 movieNights: action.payload,
                 loading: false
             }
+        case GET_MOVIENIGHTS_BY_HOST:
+            return {
+                ...state,
+                movieNights: action.payload,
+                loading: false
+            }
         case GET_MOVIENIGHT:
             return {
                 ...state,
                 movieNight: action.payload,
+                loading: false
+            }
+        case GET_MOVIENIGHT_BY_MOVIE_VIEWED:
+            return {
+                ...state,
+                movieNightViewed: action.payload,
                 loading: false
             }
         case DELETE_MOVIENIGHT:
@@ -36,7 +50,7 @@ export default function(state = initialState, action) {
                 ...state,
                 movieNights: [action.payload, ...state.movieNights]
             }
-            case MOVIENIGHTS_LOADING:
+        case MOVIENIGHTS_LOADING:
             return {
                 ...initialState, // clear our stored data when before we load new data
                 loading: true

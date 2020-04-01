@@ -51,45 +51,46 @@ class Login extends Component {
         const { errors } = this.state;
 
         return (
-            <div className="login">
-                <div className="container">
-                    <div className="row">
-                        <div className="col-md-8 m-auto">
-                            <h1 className="display-4 text-center">Log In</h1>
-                            <p className="lead text-center">Sign in to your DevConnector account</p>
-                            <form onSubmit={this.onSubmit}>
-                                <TextFieldGroup
-                                    placeholder="Email Address"
-                                    name="email"
-                                    type="email"
-                                    value={this.state.email}
-                                    onChange={this.onChange}
-                                    error={errors.email}
-                                />
+            <div className="landing">
+                <div className="dark-overlay landing-inner text-light">
+                    <div className="container">
+                        <div className="col-md-12 text-center">
+                            <h1 className="display-4 mb-4">Log In</h1>
+                            <p className="lead">Sign in to your Movie Club account</p>
+                            <div className="col-md-6 m-auto">
+                                <form onSubmit={this.onSubmit}>
+                                    <TextFieldGroup
+                                        placeholder="Email Address"
+                                        name="email"
+                                        type="email"
+                                        value={this.state.email}
+                                        onChange={this.onChange}
+                                        error={errors.email}
+                                    />
 
-                                <TextFieldGroup
-                                    placeholder="Password"
-                                    name="password"
-                                    type="password"
-                                    value={this.state.password}
-                                    onChange={this.onChange}
-                                    error={errors.password}
-                                />                                
-                                
-                                <input 
-                                    type="submit" 
-                                    className="btn btn-info btn-block mt-4" 
-                                />
-                            </form>
+                                    <TextFieldGroup
+                                        placeholder="Password"
+                                        name="password"
+                                        type="password"
+                                        value={this.state.password}
+                                        onChange={this.onChange}
+                                        error={errors.password}
+                                    />                                
+                                    
+                                    <input 
+                                        type="submit" 
+                                        className="btn btn-info btn-block mt-4" 
+                                    />
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         )
     }
-}
-
-Login.propTypes = {
+}  
+Login.protoTypes = {
     loginUser: PropTypes.func.isRequired,
     auth: PropTypes.object.isRequired,
     errors: PropTypes.object.isRequired

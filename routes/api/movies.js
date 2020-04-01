@@ -89,6 +89,99 @@ router.get('/imdbId/:imdbId', (req, res) => {
     .catch(err => res.status(404).json(err));
 });
 
+// @route   GET api/movie/genre/:genre
+// @desc    Get movies by genre
+// @access  Public
+router.get('/genre/:genre', (req, res) => {
+  const errors = {};
+  Movie.find({ 'genres.name': req.params.genre })
+      //.sort({ genre: -1 })  // descending
+      .sort({ releaseDate: -1 })  //descending
+      .then(movies => {
+          if (!movies) {
+              errors.nomovies = 'There are no movies with genre: ' + req.params.genre;
+              res.status(404).json(errors);
+          }
+          //console.log(movies);
+          res.json(movies);
+      })
+      .catch(err => res.status(404).json(err));
+});
+
+// @route   GET api/movie/person/:personTmdbId
+// @desc    Get movies by person (cast and crew)
+// @access  Public
+router.get('/person/:personTmdbId', (req, res) => {
+  const errors = {};
+  var movies = [];
+  var distinctMovies;
+  Movie.find({ 'cast': req.params.personTmdbId })
+      .sort({ releaseDate: -1 })  //descending
+      .then(castMovies => {
+          Movie.find({ 'crew': req.params.personTmdbId })
+              .sort({ releaseDate: -1 })  //descending
+              .then(crewMovies => {
+                  if (castMovies) {
+                      // there are movies that match for both cast and crew  
+                      movies.push(castMovies);
+                      const result = movies.concat(crewMovies) // [{a: 1}, {b: 2}, {a: 1}]
+                      distinctMovies = [...new Set(result.map(movie => movie.imdbId))]
+                  } else {
+                      if (crewMovies) {
+                          // there are only movies that match to crew
+                          distinctMovies.push(crewMovies)
+                      }
+                  }
+                  if (!movies) {
+                      errors.nomovies = 'There are no movies with person: ' + req.params.personTmdbId;
+                      res.status(404).json(errors);
+                  }
+                  //console.log(movies);
+                  res.json(movies);
+              })
+          
+      })
+      .catch(err => res.status(404).json(err));
+});
+
+// @route   GET api/movie/castMember/:personTmdbId
+// @desc    Get movies by castMember
+// @access  Public
+router.get('/castMember/:personTmdbId', (req, res) => {
+  const errors = {};
+  Movie.find({ 'cast': req.params.personTmdbId })
+      //.sort({ genre: -1 })  // descending
+      .sort({ releaseDate: -1 })  //descending
+      .then(movies => {
+          if (!movies) {
+              errors.nomovies = 'There are no movies with castMember: ' + req.params.personTmdbId;
+              res.status(404).json(errors);
+          }
+          //console.log(movies);
+          res.json(movies);
+      })
+      .catch(err => res.status(404).json(err));
+});
+
+// @route   GET api/movie/crewMember/:personTmdbId
+// @desc    Get movies by crewMember
+// @access  Public
+router.get('/crewMember/:personTmdbId', (req, res) => {
+  const errors = {};
+  Movie.find({ 'crew': req.params.personTmdbId })
+      //.sort({ genre: -1 })  // descending
+      .sort({ releaseDate: -1 })  //descending
+      .then(movies => {
+          if (!movies) {
+              errors.nomovies = 'There are no movies with crewMember: ' + req.params.personTmdbId;
+              res.status(404).json(errors);
+          }
+          //console.log(movies);
+          res.json(movies);
+      })
+      .catch(err => res.status(404).json(err));
+});
+
 // @route POST api/movies
 // @desc Create a movie
 // @access Private
@@ -97,67 +190,30 @@ router.post(
     passport.authenticate('jwt', { session: false }), 
     (req, res) => {
         const { errors, isValid } = validateMovieInput(req.body);
+        console.log(req.body);
+        //console.log("errors: " + errors);
 
         // check validation
-        if(!isValid) {
+        //if(!isValid) {
             // return any errors with 400 status
-            return res.status(400).json(errors);
-        }
+        //    console.log(errors);
+        //    return res.status(400).json(errors);
+        //}
         const movieFields = {};
+        
         //movieFields.user = req.user.id;
         if(req.body.title) movieFields.title = req.body.title;
         if(req.body.releaseDate) movieFields.releaseDate = req.body.releaseDate;
         if(req.body.imdbId) movieFields.imdbId = req.body.imdbId;
         if(req.body.tmdbId) movieFields.tmdbId = req.body.tmdbId;
-
-        // if(req.body.runTime) movieFields.runTime = req.body.runTime;
-        // if(req.body.posterUrl) movieFields.posterUrl = req.body.posterUrl;
-
-        // if(req.body.rottenTomatoesUrlKey) movieFields.rottenTomatoesUrlKey = req.body.rottenTomatoesUrlKey;
-        // if(req.body.rottenTomatoesTomatoMeter) movieFields.rottenTomatoesTomatoMeter = req.body.rottenTomatoesTomatoMeter;
-        // if(req.body.rottenTomatoesAudienceScore) movieFields.rottenTomatoesAudienceScore = req.body.rottenTomatoesAudienceScore;
-
-        // if(req.body.imdbId) movieFields.imdbId = req.body.imdbId;
-        // if(req.body.imdbRating) movieFields.imdbRating = req.body.imdbRating;
-
-        // // writers - split into array
-        // if(typeof req.body.writers !== 'undefined') {
-        //     movieFields.writers = req.body.writers.split(',');
-        // }
-        // // directors - split into array
-        // if(typeof req.body.directors !== 'undefined') {
-        //     movieFields.directors = req.body.directors.split(',');
-        // }
-        // // actors - split into array
-        // if(typeof req.body.actors !== 'undefined') {
-        //     movieFields.actors = req.body.actors.split(',');
-        // }
-        // // genres - split into array
-        // if(typeof req.body.genres !== 'undefined') {
-        //     movieFields.genres = req.body.genres.split(',');
-        // }
-
-        // // rottenTomatoes
-        // movieFields.rottenTomatoes = {};        
-        // if(req.body.rottenTomatoesUrlKey) movieFields.rottenTomatoes.urlKey = req.body.rottenTomatoesUrlKey;
-        // if(req.body.rottenTomatoesTomatoMeter) movieFields.rottenTomatoes.tomatoMeter = req.body.rottenTomatoesTomatoMeter;
-        // if(req.body.rottenTomatoesAudienceScore) movieFields.rottenTomatoes.audienceScore = req.body.rottenTomatoesAudienceScore;
-
-        // // imdb
-        // movieFields.imdb = {};        
-        // if(req.body.imdbId) movieFields.imdb.imdbId = req.body.imdbId;
-        // if(req.body.imdbRating) movieFields.imdb.imdbRating = req.body.imdbRating;
-
-        // movieRating
-        // TODO: THIS SEEMS INCORRECT - ARRAY OF THESE?  SEPERATE JOIN THING?
-        // movieFields.movieRating = {};        
-        // if(req.body.user) movieFields.movieRating.user = req.user.id;
-        // if(req.body.rating) movieFields.movieRating.rating = req.body.rating;
-        // if(req.body.comment) movieFields.movieRating.comment = req.body.comment;
+        if(req.body.genres) movieFields.genres = req.body.genres;
+        if(req.body.cast) movieFields.cast = req.body.cast;
+        if(req.body.crew) movieFields.crew = req.body.crew;
 
         Movie.findOne({ title: req.body.title })
             .then(movie => {
                 if(movie) {
+                  console.log("Found movie: " + movie.imdbId);
                     // update
                     Movie.findOneAndUpdate(
                         { imdbId: req.body.imdbId },
@@ -165,6 +221,7 @@ router.post(
                         { new: true }
                     )
                     .then(movie => res.json(movie));
+                    //movie.save();
                 } else { // create
                     // check if title exists
                     Movie.findOne({ imdbId: req.body.imdbId })

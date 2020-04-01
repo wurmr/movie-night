@@ -1,7 +1,9 @@
 import axios from 'axios';
 import { 
-    GET_MOVIENIGHTS, 
-    GET_MOVIENIGHT, 
+    GET_MOVIENIGHTS,
+    GET_MOVIENIGHTS_BY_HOST,
+    GET_MOVIENIGHT,
+    GET_MOVIENIGHT_BY_MOVIE_VIEWED,
     DELETE_MOVIENIGHT, 
     MOVIENIGHTS_LOADING,
     GET_ERRORS
@@ -26,7 +28,26 @@ export const getMovieNights = () => dispatch => {
           );
 };
 
-// Get movie nights by date
+// get all movie nights for a particular host
+export const getMovieNightsByHost = host => dispatch => {
+  dispatch(setMovieNightsLoading());
+  axios
+      .get(`/api/movieNights/host/${host}`)
+      .then(res => 
+          dispatch({
+              type: GET_MOVIENIGHTS_BY_HOST,
+              payload: res.data
+          })
+      )
+      .catch(err =>
+          dispatch({
+            type: GET_MOVIENIGHTS,
+            payload: null
+          })
+        );
+};
+
+// Get movie night by date
 export const getMovieNightByDate = date => dispatch => {
     dispatch(setMovieNightsLoading());
     axios
@@ -40,12 +61,31 @@ export const getMovieNightByDate = date => dispatch => {
       .catch(err =>
         dispatch({
             type: GET_ERRORS,
-            payload: err.response.data
+            payload: err
           })
         );
   };
 
-  
+// Get movie night by movie viewed IMDB ID
+export const getMovieNightByMovieViewed = movieViewed => dispatch => {
+  dispatch(setMovieNightsLoading());
+  console.log(movieViewed)
+  axios
+    .get(`/api/movieNights/movieViewed/${movieViewed}`)
+    .then(res =>
+      dispatch({
+        type: GET_MOVIENIGHT_BY_MOVIE_VIEWED,
+        payload: res.data
+      })
+    )
+    .catch(err =>
+      dispatch({
+          type: GET_ERRORS,
+          payload: err
+        })
+      );
+};
+ 
 // delete movie night by id
 export const deleteMovieNight = (id) => dispatch => {
     axios.delete(`/api/movieNights/${id}`).then(res =>

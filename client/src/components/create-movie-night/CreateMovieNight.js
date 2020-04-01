@@ -1,19 +1,13 @@
 import React, { Component } from 'react';
 import { Container, Row, Col, ListGroup, ListGroupItem, Button } from 'reactstrap';
-import { Link } from 'react-router-dom';
 import moment from 'moment';
-//import axios from 'axios';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import TextFieldGroup from '../common/TextFieldGroup';
 import SelectListGroup from '../common/SelectListGroup';
 import { createMovieNight } from '../../actions/movieNightActions';
-import { createMovieNoRedirect, getMovies } from '../../actions/movieActions';
-import { 
-    MOVIE_DB_API_KEY, 
-    MOVIE_DB_BASE_URL
- } from '../common/keys';
+import { createMovieNoRedirect, getMovies, searchForMovieByTitle, getMovieFromApiByTmdbId } from '../../actions/movieActions';
 
 class CreateMovieNight extends Component {
     constructor(props) {
@@ -53,7 +47,7 @@ class CreateMovieNight extends Component {
     }
 
     componentDidMount() {  
-        this.props.getMovies();
+        this.props.getMovies();    // TODO: is this needed?
     }
 
     componentWillReceiveProps(nextProps) {
@@ -66,116 +60,48 @@ class CreateMovieNight extends Component {
         e.preventDefault();
         const titleForSearch = e.target.elements.titleForSearch.value;
 
-        const api_searchMovie_call =
-            await fetch(`${MOVIE_DB_BASE_URL}search/movie?api_key=${MOVIE_DB_API_KEY}&language=en-US&query=${titleForSearch}&page=1&include_adult=false`);
-            const searchData = await api_searchMovie_call.json();
-            console.log(searchData);
-            console.log(searchData.results[0])
-            const searchResultId = searchData.results[0].id;
-            this.setState({searchResults: searchData.results});
-
-        const api_configuration_call = 
-            await fetch(`${MOVIE_DB_BASE_URL}configuration?api_key=${MOVIE_DB_API_KEY}`);
-        const configData = await api_configuration_call.json();
-        console.log(configData);
-        if (configData.images) {
-            this.setState({
-                imageBaseUrl: configData.images.base_url,
-                posterSizeXS: configData.images.poster_sizes[0],
-                posterSizeS: configData.images.poster_sizes[1]
-            });
-        } else {
-            this.setState({
-                imageBaseUrl: undefined,
-                posterSizeXS: undefined,
-                posterSizeS: undefined
-            });
-        }
-
-        const api_call = 
-            await fetch(`${MOVIE_DB_BASE_URL}movie/${searchResultId}?api_key=${MOVIE_DB_API_KEY}`);
-        const data = await api_call.json();
-        //const movieId = data.id;
-        console.log(data);
-
-        //const imdbId = data.imdb_id;
-
-        // if (titleForSearch && movieId) {
-        //     this.setState({
-        //         title: data.title,
-        //         releaseDate: data.release_date,
-        //         imdbId: data.imdb_id,
-        //         tmdbId: data.id.toString(),
-        //         error: ""
-        //     });
-        // } else {
-        //     this.setState({
-        //         title: undefined,
-        //         releaseDate: undefined,
-        //         imdbId: undefined,
-        //         tmdbId: undefined,
-        //         error: "There was an error"
-        //     });
-        // }
+        this.props.searchForMovieByTitle(titleForSearch);
     };
 
-    onSelectClick = async (id) => {
-        const api_call = 
-        await fetch(`${MOVIE_DB_BASE_URL}movie/${id}?api_key=${MOVIE_DB_API_KEY}`);
-        const data = await api_call.json();
-        console.log(data);
-
-        this.setState({
-                titleFirst: data.title,
-                releaseDateFirst: data.release_date,
-                imdbIdFirst: data.imdb_id,
-                tmdbIdFirst: data.id.toString(),
-                searchResults: [],
-                error: ""
-            });
-    }
-
-    onSelectClick2 = async (id) => {
-        const api_call = 
-        await fetch(`${MOVIE_DB_BASE_URL}movie/${id}?api_key=${MOVIE_DB_API_KEY}`);
-        const data = await api_call.json();
-        console.log(data);
-
-        this.setState({
-                titleSecond: data.title,
-                releaseDateSecond: data.release_date,
-                imdbIdSecond: data.imdb_id,
-                tmdbIdSecond: data.id.toString(),
-                searchResults: [],
-                error: ""
-            });
-    }
-
-    onSelectClick3 = async (id) => {
-        const api_call = 
-        await fetch(`${MOVIE_DB_BASE_URL}movie/${id}?api_key=${MOVIE_DB_API_KEY}`);
-        const data = await api_call.json();
-        console.log(data);
-
-        this.setState({
-                titleThird: data.title,
-                releaseDateThird: data.release_date,
-                imdbIdThird: data.imdb_id,
-                tmdbIdThird: data.id.toString(),
-                searchResults: [],
-                error: ""
-            });
+    onSelectClick = async (id, choiceNumber, imdb_id, title, release_date) => {
+        switch(choiceNumber) {
+            default:
+                this.setState({
+                    titleFirst: title,
+                    releaseDateFirst: release_date,
+                    imdbIdFirst: imdb_id,
+                    tmdbIdFirst: id.toString(),
+                    error: ""
+                });
+                break;
+            case 2:
+                this.setState({
+                    titleSecond: title,
+                    releaseDateSecond: release_date,
+                    imdbIdSecond: imdb_id,
+                    tmdbIdSecond: id.toString(),
+                    error: ""
+                });
+                break;
+            case 3:
+                this.setState({
+                    titleThird: title,
+                    releaseDateThird: release_date,
+                    imdbIdThird: imdb_id,
+                    tmdbIdThird: id.toString(),
+                    error: ""
+                });
+                break;
+        }
     }
 
     onSubmit = async (e)  =>{
         e.preventDefault();
 
         // get all movies
-        //this.props.getMovies();
         const { movies } = this.props.movie;
-        console.log(movies);
+        //console.log(movies);
 
-        //[{ type: Schema.Types.ObjectId, ref: 'movie' }]
         const movieChoicesRoundOne = [];
         let firstSelectionInDB = false;
         let secondSelectionInDB = false;
@@ -217,6 +143,7 @@ class CreateMovieNight extends Component {
                 releaseDate: this.state.releaseDateFirst,
                 imdbId: this.state.imdbIdFirst,
                 tmdbId: this.state.tmdbIdFirst
+                // TODO: add genres, cast, crew
             };
             await this.saveMovie(movieData);
         }
@@ -228,6 +155,7 @@ class CreateMovieNight extends Component {
                 releaseDate: this.state.releaseDateSecond,
                 imdbId: this.state.imdbIdSecond,
                 tmdbId: this.state.tmdbIdSecond
+                // TODO: add genres, cast, crew
             };
             await this.saveMovie(movieData);
         }
@@ -239,6 +167,7 @@ class CreateMovieNight extends Component {
                 releaseDate: this.state.releaseDateThird,
                 imdbId: this.state.imdbIdThird,
                 tmdbId: this.state.tmdbIdThird
+                // TODO: add genres, cast, crew
             };
             await this.saveMovie(movieData);
         }
@@ -259,7 +188,7 @@ class CreateMovieNight extends Component {
             movieVotesRoundThree: this.state.movieVotesRoundThree
         };
 
-        console.log(movieNightData);
+        //console.log(movieNightData);
 
         if (movieNightData.date && movieNightData.host) {
             this.props.createMovieNight(movieNightData, this.props.history);
@@ -277,6 +206,8 @@ class CreateMovieNight extends Component {
 
   render() {
     const { errors } = this.state;
+    var movieSearchResults = [];    
+    let searchResultsContent; 
 
     // Select options for host name
     const hostOptions = [
@@ -289,11 +220,11 @@ class CreateMovieNight extends Component {
         { label: 'Rick', value: 'Rick' },
         { label: 'Cathy', value: 'Cathy' },
         { label: 'Chad', value: 'Chad' },
+        { label: 'Theater - No Host', value: 'Theater' },
         { label: 'Stacey', value: 'Stacey' },
         { label: 'Zach', value: 'Zach' },
         { label: 'Laura', value: 'Laura' },
-        { label: 'Jennifer', value: 'Jennifer' },
-        { label: 'Theater', value: 'Theater' }
+        { label: 'Jennifer', value: 'Jennifer' }
     ];
 
     // Select options for location
@@ -311,15 +242,65 @@ class CreateMovieNight extends Component {
         { label: 'Alamo Drafthouse, Woodbury', value: 'Alamo Drafthouse, Woodbury' }
     ];
 
+    if (this.props.movieSearchResults && this.props.movieSearchResults[0]) {
+        movieSearchResults = this.props.movieSearchResults;
+
+        searchResultsContent = (
+            <div className="row">
+                <Container>
+                    <ListGroup>
+                        {movieSearchResults.map(({ id, title, release_date, overview, poster_path, imageBaseUrl, posterSizeXS, imdb_id }) => (
+                            <ListGroupItem key={id}>
+                            <Row>
+                                <Col xs="4">
+                                    <img src={imageBaseUrl + posterSizeXS + poster_path} style={{width: 120}} alt={title}></img>
+                                </Col>
+                                <Col xs="8">
+                                    <Button 
+                                        className="select-btn"
+                                        color="secondary"
+                                        size="sm"
+                                        onClick={this.onSelectClick.bind(this, id, 1, imdb_id, title, release_date)}
+                                        >Make Choice 1
+                                    </Button>
+                                    &nbsp;
+                                    <Button 
+                                        className="select-btn2"
+                                        color="secondary"
+                                        size="sm"
+                                        onClick={this.onSelectClick.bind(this, id, 2, imdb_id, title, release_date)}
+                                        >Make Choice 2
+                                    </Button>
+                                    &nbsp;
+                                    <Button 
+                                        className="select-btn3"
+                                        color="secondary"
+                                        size="sm"
+                                        onClick={this.onSelectClick.bind(this, id, 3, imdb_id, title, release_date)}
+                                        >Make Choice 3
+                                    </Button>
+                                    <p>{title} ({moment(release_date).format('YYYY')})</p>
+                                    <p>{overview}</p>
+                                </Col>
+                            </Row>
+                        </ListGroupItem>
+                        ))}
+                    </ListGroup>
+                </Container>
+            </div>
+        );
+
+    }
+
     return (
         <div className="create-movie-night">
             <div className="container">                
 
                 <div className="row">
                     <div className="col-md-8 m-auto">
-                        <h1 className="display-4 text-center">Create Your Movie Night</h1>
+                        <h3 className="display-4 text-center">Create Your Movie Night</h3>
                         <p className="lead text-center">
-                            Let's get some information to make your movie night stand out
+                            {/* Let's get some information to make your movie night stand out */}
                         </p>
                         <small className="d-block pb-3">* = required fields</small>
                         <form onSubmit={this.onSubmit}>
@@ -350,6 +331,36 @@ class CreateMovieNight extends Component {
                                 error={errors.location}
                                 info=""
                             />
+                            <div className="row">
+                                &nbsp;
+                            </div>
+                            <div className="row">
+                                <div className="col-md-8 m-auto">
+                                    <h4 className="display-4 text-center">Search For Movie</h4>
+                                    <form onSubmit={this.getMovieFromApi}>
+                                        <TextFieldGroup
+                                            placeholder="* Movie Title"
+                                            name="titleForSearch"
+                                            value={this.state.titleForSearch}
+                                            onChange={this.onChange}
+                                            error={errors.titleForSearch}
+                                        />
+                                        
+                                        <input
+                                            type="submit"
+                                            value="Search"
+                                            className="btn btn-info btn-block mt-4"
+                                        />
+                                    </form>
+                                </div>
+                            </div>
+                            <div className="row">
+                                &nbsp;
+                            </div>
+
+                            {searchResultsContent}
+
+
                             <h6>Choice 1</h6>
                             <p>{this.state.titleFirst} ({moment(this.state.releaseDateFirst).format('YYYY')})</p>
                             <h6>Choice 2</h6>
@@ -366,70 +377,6 @@ class CreateMovieNight extends Component {
                         </form>
                     </div>
                 </div>
-
-
-                <div className="row">
-                    <div className="col-md-8 m-auto">
-                        <h1 className="display-4 text-center">Search For Movie</h1>
-                        <form onSubmit={this.getMovieFromApi}>
-                            <TextFieldGroup
-                                placeholder="* Movie Title"
-                                name="titleForSearch"
-                                value={this.state.titleForSearch}
-                                onChange={this.onChange}
-                                error={errors.titleForSearch}
-                            />
-                            
-                            <input
-                                type="submit"
-                                value="Search"
-                                className="btn btn-info btn-block mt-4"
-                            />
-                        </form>
-                    </div>
-                </div>
-
-                <div className="row">
-                    <Container>
-                        <ListGroup>
-                            {this.state.searchResults.map(({ id, title, release_date, overview, poster_path }) => (
-                                <ListGroupItem key={id}>
-                                <Row>
-                                    <Col xs="4">
-                                        <img src={this.state.imageBaseUrl + this.state.posterSizeXS + poster_path} style={{width: 120}} alt={title}></img>
-                                    </Col>
-                                    <Col xs="8">
-                                        <Button 
-                                            className="select-btn"
-                                            color="secondary"
-                                            size="sm"
-                                            onClick={this.onSelectClick.bind(this, id)}
-                                            >Select
-                                        </Button>
-                                        <Button 
-                                            className="select-btn2"
-                                            color="secondary"
-                                            size="sm"
-                                            onClick={this.onSelectClick2.bind(this, id)}
-                                            >Select
-                                        </Button>
-                                        <Button 
-                                            className="select-btn3"
-                                            color="secondary"
-                                            size="sm"
-                                            onClick={this.onSelectClick3.bind(this, id)}
-                                            >Select
-                                        </Button>
-                                        &nbsp;<Link to={`/movie/${title}`}>{title}</Link> ({moment(release_date).format('YYYY')}) {overview}
-                                    </Col>
-                                </Row>
-                            </ListGroupItem>
-                            ))}
-                        </ListGroup>
-                    </Container>
-                </div>
-
-
             </div>
         </div>
     );
@@ -439,15 +386,19 @@ class CreateMovieNight extends Component {
 CreateMovieNight.propTypes = {
   movieNight: PropTypes.object.isRequired,
   errors: PropTypes.object.isRequired,
-  movie: PropTypes.object.isRequired
+  movie: PropTypes.object.isRequired,
+  movieSearchResults: PropTypes.array,
+  movieDetailTmdb: PropTypes.object
 };
 
 const mapStateToProps = state => ({
   movieNight: state.movieNight,
   movie: state.movie,
+  movieSearchResults: state.movie.movieSearchResults,
+  movieDetailTmdb: state.movie.movieDetailTmdb,
   errors: state.errors
 });
 
-export default connect(mapStateToProps, { createMovieNight, createMovieNoRedirect, getMovies })(
+export default connect(mapStateToProps, { createMovieNight, createMovieNoRedirect, getMovies, searchForMovieByTitle, getMovieFromApiByTmdbId })(
   withRouter(CreateMovieNight)
 );
